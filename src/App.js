@@ -25,7 +25,7 @@ function App() {
     return {
       firstName: faker.name.firstName(),
       lastName: faker.name.firstName(),
-      address: faker.address.streetAddress()
+      address: faker.address.streetAddress() + faker.address.streetAddress()
     };
   });
   return (

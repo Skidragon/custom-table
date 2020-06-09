@@ -1,7 +1,7 @@
 import React from "react";
 import styled from "styled-components";
-import { useTable } from "react-table";
-
+import { useTable, useFilters, useSortBy } from "react-table";
+const slateBlue = "#415464";
 const Styles = styled.div`
   padding: 1rem;
 
@@ -14,6 +14,12 @@ const Styles = styled.div`
     tr:nth-child(odd) {
       background: rgb(224, 224, 224);
     }
+    tr:nth-child(even):hover {
+      background: rgb(184, 183, 183);
+    }
+    tr:nth-child(odd):hover {
+      background: rgb(224, 224, 224);
+    }
     tr {
       :last-child {
         td {
@@ -22,15 +28,17 @@ const Styles = styled.div`
       }
     }
     th {
-      background: #415464;
+      background: ${slateBlue};
       color: white;
+      padding: 0.2rem;
+      border-bottom: 2px solid ${slateBlue};
+      border-right: 2px solid ${slateBlue};
     }
-    th,
     td {
       margin: 0;
-      padding: 0.5rem;
-      border-bottom: 1px solid #415464;
-      border-right: 1px solid #415464;
+      padding: 0.8rem;
+      border-bottom: 2px solid ${slateBlue};
+      border-right: 2px solid ${slateBlue};
 
       :last-child {
         border-right: 0;
@@ -38,19 +46,59 @@ const Styles = styled.div`
     }
   }
 `;
-
+const Header = styled.div`
+  cursor: pointer;
+  border-top: ${props =>
+    props.isSorted && !props.isSortedDesc ? `3px solid black` : ""};
+  border-bottom: ${props =>
+    props.isSorted && props.isSortedDesc ? `3px solid black` : ""};
+`;
+const DefaultColumnFilter = ({
+  column: { filterValue, setFilter, filterId = "" }
+}) => {
+  return (
+    <input
+      value={filterValue || ""}
+      autoComplete="new-password"
+      id={filterId}
+      onChange={e => {
+        setFilter(e.target.value || undefined); // Set undefined to remove the filter entirely
+      }}
+      placeholder={`Filter`}
+      style={{
+        borderRadius: "5px",
+        padding: "4px",
+        outline: "none",
+        width: "95%"
+      }}
+    />
+  );
+};
 export default function HorizonTable({ columns, data }) {
   // Use the state and functions returned from useTable to build your UI
+  const defaultColumn = React.useMemo(
+    () => ({
+      // Let's set up our default Filter UI
+      Filter: DefaultColumnFilter
+    }),
+    []
+  );
+
   const {
     getTableProps,
     getTableBodyProps,
     headerGroups,
     rows,
     prepareRow
-  } = useTable({
-    columns,
-    data
-  });
+  } = useTable(
+    {
+      columns,
+      data,
+      defaultColumn
+    },
+    useFilters,
+    useSortBy
+  );
 
   // Render the UI for your table
   return (
@@ -60,7 +108,27 @@ export default function HorizonTable({ columns, data }) {
           {headerGroups.map(headerGroup => (
             <tr {...headerGroup.getHeaderGroupProps()}>
               {headerGroup.headers.map(column => (
-                <th {...column.getHeaderProps()}>{column.render("Header")}</th>
+                <th {...column.getHeaderProps()}>
+                  <Header
+                    {...column}
+                    {...column.getSortByToggleProps()}
+                    style={{
+                      padding: "6px 0"
+                    }}
+                  >
+                    {column.render("Header")}
+                  </Header>
+                  {column.canFilter && (
+                    <div
+                      style={{
+                        marginTop: "6px",
+                        padding: "0 4px"
+                      }}
+                    >
+                      {column.render("Filter")}
+                    </div>
+                  )}
+                </th>
               ))}
             </tr>
           ))}
